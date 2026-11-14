@@ -72,7 +72,7 @@ def _load_ha_options() -> dict[str, Any]:
     return data if isinstance(data, dict) else {}
 
 
-def load_config(path: str | Path = "assistant_config.yaml") -> AppConfig:
+def load_config(path: str | Path = "/config/voice_assistant.yaml") -> AppConfig:
     config_path = Path(path)
     if not config_path.exists():
         raise FileNotFoundError(f"Konfigurationsdatei nicht gefunden: {config_path}")
@@ -81,50 +81,25 @@ def load_config(path: str | Path = "assistant_config.yaml") -> AppConfig:
         raw: dict[str, Any] = yaml.safe_load(f) or {}
 
     ha_options = _load_ha_options()
-
-    ww_raw = raw.get("wakeword", {})
-    cmd_raw = raw.get("command", {})
-    audio_raw = raw.get("audio", {})
     commands_raw = raw.get("commands", {})
 
-    wakeword_model = (
-        os.environ.get("WAKEWORD_MODEL")
-        or ha_options.get("wakeword_model")
-        or ww_raw.get("model", "hey_jarvis")
-    )
     wakeword = WakeWordConfig(
-        model=str(wakeword_model),
-        threshold=float(ha_options.get("threshold", ww_raw.get("threshold", 0.5))),
-        cooldown_seconds=float(ha_options.get("cooldown_seconds", ww_raw.get("cooldown_seconds", 1.5))),
+        model=str(ha_options.get("wakeword_model") or "hey_jarvis"),
+        threshold=float(ha_options.get("threshold", 0.5)),
+        cooldown_seconds=float(ha_options.get("cooldown_seconds", 1.5)),
     )
 
-    vosk_path = os.environ.get("VOSK_MODEL_PATH") or cmd_raw.get(
-        "vosk_model_path", "/app/models/vosk-model-small-de-0.15"
-    )
     command = CommandConfig(
-        vosk_model_path=str(vosk_path),
-        listen_timeout_seconds=float(
-            ha_options.get("listen_timeout_seconds", cmd_raw.get("listen_timeout_seconds", 3.5))
-        ),
+        listen_timeout_seconds=float(ha_options.get("listen_timeout_seconds", 3.5)),
     )
 
-    env_device = os.environ.get("INPUT_DEVICE")
-    opt_device = ha_options.get("input_device")
-    raw_device = env_device if env_device is not None else (opt_device if opt_device not in (None, "") else audio_raw.get("input_device"))
-    input_device = _parse_input_device(raw_device)
     audio = AudioConfig(
-        sample_rate=int(audio_raw.get("sample_rate", 16000)),
-        chunk_size=int(audio_raw.get("chunk_size", 1280)),
-        input_device=input_device,
+        input_device=_parse_input_device(ha_options.get("input_device")),
     )
 
-    supervisor_token = os.environ.get("SUPERVISOR_TOKEN", "")
-    ha_url = (os.environ.get("HA_URL") or "http://supervisor/core").rstrip("/")
-    ha_token = supervisor_token or os.environ.get("HA_TOKEN", "")
     home_assistant = HomeAssistantConfig(
-        url=ha_url,
-        token=str(ha_token),
-        timeout_seconds=5.0,
+        url="http://supervisor/core",
+        token=os.environ.get("SUPERVISOR_TOKEN", ""),
     )
 
     commands: dict[str, ServiceCall] = {}

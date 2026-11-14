@@ -6,18 +6,11 @@ from src.config import load_config
 
 def test_load_config_reads_yaml_and_normalizes_commands(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("SUPERVISOR_TOKEN", raising=False)
-    monkeypatch.delenv("HA_URL", raising=False)
-    monkeypatch.delenv("HA_TOKEN", raising=False)
-    monkeypatch.delenv("WAKEWORD_MODEL", raising=False)
-    monkeypatch.delenv("INPUT_DEVICE", raising=False)
+    monkeypatch.setenv("HA_OPTIONS_FILE", str(tmp_path / "missing_options.json"))
 
-    cfg_file = tmp_path / "config.yaml"
+    cfg_file = tmp_path / "voice_assistant.yaml"
     cfg_file.write_text(
         """
-wakeword:
-  model: "hey_jarvis"
-  threshold: 0.6
-  cooldown_seconds: 2.0
 commands:
   "  Alles   Aus ":
     domain: "homeassistant"
@@ -30,38 +23,13 @@ commands:
 
     cfg = load_config(cfg_file)
     assert cfg.wakeword.model == "hey_jarvis"
-    assert cfg.wakeword.threshold == 0.6
+    assert cfg.wakeword.threshold == 0.5
     assert cfg.home_assistant.url == "http://supervisor/core"
     assert cfg.home_assistant.token == ""
     assert "alles aus" in cfg.commands
     assert cfg.commands["alles aus"].domain == "homeassistant"
     assert cfg.commands["alles aus"].service == "turn_off"
     assert cfg.commands["alles aus"].data == {"entity_id": "all"}
-
-
-def test_env_overrides(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv("SUPERVISOR_TOKEN", raising=False)
-    cfg_file = tmp_path / "config.yaml"
-    cfg_file.write_text(
-        """
-commands:
-  "alles aus":
-    domain: "homeassistant"
-    service: "turn_off"
-""",
-        encoding="utf-8",
-    )
-
-    monkeypatch.setenv("HA_URL", "http://192.168.1.10:8123/")
-    monkeypatch.setenv("HA_TOKEN", "secret_token")
-    monkeypatch.setenv("WAKEWORD_MODEL", "/config/models/assistant.onnx")
-    monkeypatch.setenv("INPUT_DEVICE", "2")
-
-    cfg = load_config(cfg_file)
-    assert cfg.home_assistant.url == "http://192.168.1.10:8123"
-    assert cfg.home_assistant.token == "secret_token"
-    assert cfg.wakeword.model == "/config/models/assistant.onnx"
-    assert cfg.audio.input_device == 2
 
 
 def test_load_config_requires_commands(tmp_path: Path) -> None:
@@ -72,10 +40,6 @@ def test_load_config_requires_commands(tmp_path: Path) -> None:
 
 
 def test_supervisor_token_and_ha_options(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv("HA_URL", raising=False)
-    monkeypatch.delenv("HA_TOKEN", raising=False)
-    monkeypatch.delenv("WAKEWORD_MODEL", raising=False)
-    monkeypatch.delenv("INPUT_DEVICE", raising=False)
 
     cfg_file = tmp_path / "assistant_config.yaml"
     cfg_file.write_text(
