@@ -2,7 +2,7 @@ name: "Keyword Voice Assistant"
 version: "1.0.0"
 slug: "keyword_voice_assistant"
 description: "Lokaler Keyword-Sprachassistent mit openWakeWord und Vosk für Home Assistant"
-url: "https://github.com/DEIN-USER/DEIN-REPO"
+url: "https://github.com/muellercornelius/VoiceAssistant"
 arch:
   - amd64
   - aarch64

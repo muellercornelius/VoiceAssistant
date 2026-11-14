@@ -6,14 +6,13 @@ Beispiel: *"Hey Jarvis ... alles aus"* (oder mit eigenem `assistant.onnx`-Modell
 
 ## Installation als Home Assistant OS Add-on (über GitHub)
 
-1. In [repository.yaml](./repository.yaml) und [voice_assistant/config.yaml](./voice_assistant/config.yaml) die Platzhalter `https://github.com/DEIN-USER/DEIN-REPO` durch deine echte GitHub-Repository-URL ersetzen.
-2. Das Repository zu GitHub pushen.
-3. In Home Assistant OS:
+1. Das Repository zu GitHub pushen (`https://github.com/muellercornelius/VoiceAssistant`).
+2. In Home Assistant OS:
    - **Einstellungen → Add-ons → Add-on-Store** öffnen.
    - Oben rechts auf das **Drei-Punkte-Menü → Repositories** klicken.
-   - Deine GitHub-Repository-URL hinzufügen.
+   - `https://github.com/muellercornelius/VoiceAssistant` hinzufügen.
    - Das Add-on **Keyword Voice Assistant** installieren und starten.
-4. Beim ersten Start legt das Add-on automatisch eine bearbeitbare Konfigurationsdatei unter `/config/voice_assistant.yaml` in Home Assistant an. Dort kannst du deine Keywords und Service-Aufrufe anpassen (danach Add-on neu starten).
+3. Beim ersten Start legt das Add-on automatisch eine bearbeitbare Konfigurationsdatei unter `/config/voice_assistant.yaml` in Home Assistant an. Dort kannst du deine Keywords und Service-Aufrufe anpassen (danach Add-on neu starten).
    - Wake-Word, Threshold, Timeout und Eingabegerät lassen sich direkt in der **Add-on-Konfiguration (UI)** einstellen.
    - Authentifizierung (`SUPERVISOR_TOKEN`) und Audio (`audio: true`) werden vom HAOS Supervisor automatisch bereitgestellt.
 
