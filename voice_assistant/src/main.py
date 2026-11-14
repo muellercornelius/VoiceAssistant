@@ -18,7 +18,6 @@ def _list_audio_devices() -> None:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Lokaler Keyword Voice Assistant (openWakeWord + Vosk + Home Assistant)")
-    parser.add_argument("--config", default="config.yaml", help="Pfad zur config.yaml")
     parser.add_argument("--list-devices", action="store_true", help="Verfügbare Audio-Geräte anzeigen und beenden")
     args = parser.parse_args(argv)
 
@@ -31,7 +30,7 @@ def main(argv: list[str] | None = None) -> int:
         _list_audio_devices()
         return 0
 
-    config = load_config(args.config)
+    config = load_config()
     ha_client = HomeAssistantClient(config.home_assistant)
     ha_client.check_connection()
 

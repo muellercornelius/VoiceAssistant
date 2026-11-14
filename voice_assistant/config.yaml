@@ -10,18 +10,35 @@ init: false
 audio: true
 homeassistant_api: true
 map:
-  - config:rw
+  - config:ro
 options:
   wakeword_model: "hey_jarvis"
   threshold: 0.5
   cooldown_seconds: 1.5
   listen_timeout_seconds: 3.5
   input_device: ""
-  commands_file: "/config/voice_assistant.yaml"
+  commands:
+    - phrase: "alles aus"
+      domain: "homeassistant"
+      service: "turn_off"
+      entity_id: "all"
+    - phrase: "licht an"
+      domain: "light"
+      service: "turn_on"
+      entity_id: "light.wohnzimmer"
+    - phrase: "licht aus"
+      domain: "light"
+      service: "turn_off"
+      entity_id: "light.wohnzimmer"
 schema:
   wakeword_model: str
   threshold: float(0.05,1.0)
   cooldown_seconds: float(0.0,10.0)
   listen_timeout_seconds: float(1.0,15.0)
   input_device: str?
-  commands_file: str
+  commands:
+    - phrase: str
+      domain: str
+      service: str
+      entity_id: str?
+      data: str?

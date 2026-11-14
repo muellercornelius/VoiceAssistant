@@ -6,8 +6,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-import yaml
-
 
 @dataclass(frozen=True)
 class WakeWordConfig:
@@ -63,25 +61,35 @@ def _parse_input_device(raw: Any) -> int | str | None:
     return s
 
 
-def _load_ha_options() -> dict[str, Any]:
-    options_path = Path(os.environ.get("HA_OPTIONS_FILE", "/data/options.json"))
-    if not options_path.exists():
-        return {}
-    with options_path.open("r", encoding="utf-8") as f:
+def _load_ha_options(options_path: str | Path | None = None) -> dict[str, Any]:
+    path = Path(options_path) if options_path is not None else Path(os.environ.get("HA_OPTIONS_FILE", "/data/options.json"))
+    if not path.exists():
+        raise FileNotFoundError(f"Add-on-Optionsdatei nicht gefunden: {path}")
+    with path.open("r", encoding="utf-8") as f:
         data = json.load(f)
-    return data if isinstance(data, dict) else {}
+    if not isinstance(data, dict):
+        raise ValueError(f"Ungültiges Format in {path}: JSON-Objekt erwartet")
+    return data
 
 
-def load_config(path: str | Path = "/config/voice_assistant.yaml") -> AppConfig:
-    config_path = Path(path)
-    if not config_path.exists():
-        raise FileNotFoundError(f"Konfigurationsdatei nicht gefunden: {config_path}")
+def _parse_command_data(raw_data: Any, phrase: str) -> dict[str, Any]:
+    if raw_data is None or raw_data == "":
+        return {}
+    if isinstance(raw_data, dict):
+        return dict(raw_data)
+    if isinstance(raw_data, str):
+        try:
+            parsed = json.loads(raw_data)
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"Ungültiges JSON in 'data' für '{phrase}': {exc}") from exc
+        if not isinstance(parsed, dict):
+            raise ValueError(f"'data' für '{phrase}' muss ein JSON-Objekt sein")
+        return parsed
+    raise ValueError(f"Ungültiges 'data'-Format für '{phrase}'")
 
-    with config_path.open("r", encoding="utf-8") as f:
-        raw: dict[str, Any] = yaml.safe_load(f) or {}
 
-    ha_options = _load_ha_options()
-    commands_raw = raw.get("commands", {})
+def load_config(options_path: str | Path | None = None) -> AppConfig:
+    ha_options = _load_ha_options(options_path)
 
     wakeword = WakeWordConfig(
         model=str(ha_options.get("wakeword_model") or "hey_jarvis"),
@@ -102,21 +110,35 @@ def load_config(path: str | Path = "/config/voice_assistant.yaml") -> AppConfig:
         token=os.environ.get("SUPERVISOR_TOKEN", ""),
     )
 
+    commands_raw = ha_options.get("commands") or []
+    if not isinstance(commands_raw, list):
+        raise ValueError("'commands' in den Add-on-Optionen muss eine Liste sein.")
+
     commands: dict[str, ServiceCall] = {}
-    for phrase, spec in commands_raw.items():
-        normalized = " ".join(str(phrase).lower().split())
+    for entry in commands_raw:
+        if not isinstance(entry, dict):
+            raise ValueError("Jeder Eintrag in 'commands' muss ein Objekt sein.")
+        normalized = " ".join(str(entry.get("phrase", "")).lower().split())
         if not normalized:
             continue
-        if not isinstance(spec, dict) or "domain" not in spec or "service" not in spec:
-            raise ValueError(f"Ungültiger Command-Eintrag für '{phrase}': domain und service erforderlich")
+        domain = str(entry.get("domain", "")).strip()
+        service = str(entry.get("service", "")).strip()
+        if not domain or not service:
+            raise ValueError(f"Ungültiger Command-Eintrag für '{normalized}': domain und service erforderlich")
+
+        data = _parse_command_data(entry.get("data"), normalized)
+        entity_id = str(entry.get("entity_id") or "").strip()
+        if entity_id and "entity_id" not in data:
+            data["entity_id"] = entity_id
+
         commands[normalized] = ServiceCall(
-            domain=str(spec["domain"]),
-            service=str(spec["service"]),
-            data=dict(spec.get("data") or {}),
+            domain=domain,
+            service=service,
+            data=data,
         )
 
     if not commands:
-        raise ValueError("Mindestens ein Command muss in config.yaml unter 'commands' definiert sein.")
+        raise ValueError("Mindestens ein Command muss in den Add-on-Optionen unter 'commands' definiert sein.")
 
     return AppConfig(
         wakeword=wakeword,

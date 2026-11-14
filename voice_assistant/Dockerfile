@@ -28,7 +28,6 @@ RUN mkdir -p /app/models \
 # openWakeWord Basis- & Standardmodelle vorab herunterladen (ONNX)
 RUN python -c "import openwakeword.utils; openwakeword.utils.download_models()"
 
-COPY assistant_config.yaml .
 COPY src/ ./src/
 COPY run.sh .
 RUN chmod +x /app/run.sh
