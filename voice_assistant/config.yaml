@@ -1,0 +1,27 @@
+name: "Keyword Voice Assistant"
+version: "1.0.0"
+slug: "keyword_voice_assistant"
+description: "Lokaler Keyword-Sprachassistent mit openWakeWord und Vosk für Home Assistant"
+url: "https://github.com/DEIN-USER/DEIN-REPO"
+arch:
+  - amd64
+  - aarch64
+init: false
+audio: true
+homeassistant_api: true
+map:
+  - config:rw
+options:
+  wakeword_model: "hey_jarvis"
+  threshold: 0.5
+  cooldown_seconds: 1.5
+  listen_timeout_seconds: 3.5
+  input_device: ""
+  commands_file: "/config/voice_assistant.yaml"
+schema:
+  wakeword_model: str
+  threshold: float(0.05,1.0)
+  cooldown_seconds: float(0.0,10.0)
+  listen_timeout_seconds: float(1.0,15.0)
+  input_device: str?
+  commands_file: str

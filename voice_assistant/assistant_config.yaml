@@ -1,0 +1,22 @@
+# Konfiguration der Sprachbefehle für den Keyword Voice Assistant
+#
+# Wake-Word, Threshold, Timeout und Eingabegerät werden direkt in der
+# Home Assistant Add-on-Konfiguration (UI) eingestellt.
+#
+# Mapping: Erkanntes Keyword (Kleinschreibung) -> Home Assistant Service-Aufruf
+commands:
+  "alles aus":
+    domain: "homeassistant"
+    service: "turn_off"
+    data:
+      entity_id: "all"
+  "licht an":
+    domain: "light"
+    service: "turn_on"
+    data:
+      entity_id: "light.wohnzimmer"
+  "licht aus":
+    domain: "light"
+    service: "turn_off"
+    data:
+      entity_id: "light.wohnzimmer"
